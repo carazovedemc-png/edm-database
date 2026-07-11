@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EDM data base // SECRET FILES</title>
+<style>
+/* =========================================================
+   Полностью офлайн: без внешних CDN, без Google Fonts,
+   без внешних картинок. Всё, что нужно, лежит в этом файле.
+   ========================================================= */
+:root{
+  --bg-color:#e5e5e5;
+  --text-color:#000000;
+  --folder-bg:#f2f2f2;
+  --folder-border:#1a1a1a;
+  --accent:#ff5500;
+  --radius:12px;
+  --bwidth:1.5px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Courier New', 'Consolas', monospace;
+  background-color:var(--bg-color);
+  color:var(--text-color);
+  overflow-x:hidden;
+  transition:background-color .5s ease,color .5s ease;
+  /* запрет на выделение текста / вызов системного меню при долгом тапе */
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
+}
+/* внутри полей ввода и текстового редактора выделение нужно оставить,
+   иначе невозможно будет редактировать текст */
+input, textarea{
+  -webkit-user-select:text;
+  user-select:text;
+  -webkit-touch-callout:default;
+}
+img{ -webkit-user-drag:none; user-drag:none; pointer-events:none; }
+button{font-family:inherit;cursor:pointer;}
+
+/* ---------- утилиты (мини-набор вместо Tailwind) ---------- */
+.flex{display:flex;} .flex-col{flex-direction:column;}
+.items-center{align-items:center;} .items-end{align-items:flex-end;}
+.justify-center{justify-content:center;} .justify-between{justify-content:space-between;} .justify-end{justify-content:flex-end;}
+.gap-2{gap:8px;} .gap-3{gap:12px;}
+.w-full{width:100%;} .h-full{height:100%;}
+.text-center{text-align:center;}
+.opacity-70{opacity:.7;} .opacity-60{opacity:.6;} .opacity-50{opacity:.5;}
+.mt-1{margin-top:4px;} .mt-4{margin-top:16px;} .mb-2{margin-bottom:8px;} .mb-8{margin-bottom:32px;}
+.hidden{display:none !important;}
+
+/* ---------- экран авторизации ---------- */
+#auth-screen{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background-color:#000;z-index:100;
+  transition:opacity .8s ease, visibility .8s;
+}
+#auth-screen.hidden-auth{opacity:0;visibility:hidden;pointer-events:none;}
+#starfield-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block;}
+.auth-card{
+  position:relative;z-index:2;width:100%;max-width:340px;margin:0 20px;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border:2px solid #000;box-shadow:8px 8px 0 var(--accent);
+  color:#000;padding:28px;border-radius:2px;
+}
+.auth-title{
+  font-size:22px;font-weight:bold;letter-spacing:-.5px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border-bottom:2px solid #000;padding-bottom:14px;margin-bottom:16px;
+}
+.auth-sub{font-size:11px;color:#555;font-family:monospace;margin-top:2px;text-align:center;margin-bottom:18px;}
+.auth-input{
+  width:100%;padding:12px;border:2px solid #000;font-family:monospace;font-size:14px;
+  margin-bottom:12px;background:#fff;color:#000;
+}
+.auth-error{font-size:12px;color:#c00;text-align:center;min-height:16px;margin-bottom:8px;font-family:monospace;}
+.btn-accent{
+  background-color:var(--accent);color:#000;border:1.5px solid var(--text-color);
+  box-shadow:2px 2px 0 var(--text-color);transition:all .15s ease;font-weight:bold;
+  padding:14px;font-size:13px;letter-spacing:2px;text-transform:uppercase;width:100%;border-radius:0;
+}
+.btn-accent:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--text-color);}
+.btn-accent:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--text-color);}
+
+/* ---------- логотип (инлайн SVG, без интернета) ---------- */
+.logo-svg{width:26px;height:26px;flex-shrink:0;}
+
+/* ---------- главный интерфейс ---------- */
+#main-app{min-height:100vh;padding:20px;opacity:0;transition:opacity 1s ease;}
+#main-app.visible{opacity:1;}
+
+.border-adaptive{border-color:var(--text-color);}
+.bg-adaptive{background-color:var(--text-color);color:var(--bg-color);}
+.brutalist-border{border:1.5px solid var(--text-color);}
+
+.app-header{
+  max-width:900px;margin:0 auto 28px auto;display:flex;justify-content:space-between;
+  align-items:flex-end;border-bottom:2px solid var(--text-color);padding-bottom:14px;
+}
+.app-title{font-size:26px;font-weight:bold;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;}
+.app-sub{font-size:11px;margin-top:4px;opacity:.7;font-family:monospace;}
+.header-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.hbtn{
+  padding:9px 14px;border:1.5px solid var(--text-color);font-weight:bold;font-size:11px;
+  background:var(--folder-bg);color:var(--text-color);transition:opacity .15s;
+}
+.hbtn:hover{opacity:.7;}
+.hbtn.dark{background:var(--text-color);color:var(--bg-color);}
+
+/* ---------- картотека / карточки файлов ---------- */
+#cabinet-container{position:relative;width:100%;max-width:900px;margin:20px auto 60px auto;}
+.empty-hint{text-align:center;opacity:.5;font-size:13px;padding:40px 0;font-family:monospace;}
+
+.folder-wrapper{
+  position:absolute;width:100%;height:210px;left:0;
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
+  cursor:pointer;
+}
+.folder-tab{
+  position:absolute;top:0;height:34px;max-width:70%;min-width:120px;
+  background:var(--folder-bg);border:var(--bwidth) solid var(--folder-border);border-bottom:none;
+  border-radius:var(--radius) var(--radius) 0 0;
+  display:flex;align-items:center;padding:0 14px;font-size:11px;font-weight:bold;
+  gap:10px;z-index:2;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.folder-tab .tab-name{opacity:.55;overflow:hidden;text-overflow:ellipsis;}
+.folder-body{
+  position:absolute;top:33px;left:0;width:100%;height:calc(100% - 33px);
+  background:var(--folder-bg);border:var(--bwidth) solid var(--folder-border);
+  border-radius:8px;z-index:1;box-shadow:0 5px 15px rgba(0,0,0,.1);overflow:hidden;
+  display:flex;flex-direction:column;color:var(--text-color);
+}
+.folder-wrapper.dark-theme .folder-tab,.folder-wrapper.dark-theme .folder-body{
+  background:#111;color:#fff;border-color:#333;
+}
+.folder-wrapper.popped{transform:translateY(-46px);z-index:40 !important;}
+.folder-wrapper.popped .folder-body{box-shadow:0 15px 30px rgba(0,0,0,.3);}
+
+.folder-action-area{
+  position:absolute;width:100%;opacity:0;transform:translateY(20px);
+  transition:all .3s ease;padding:18px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px dashed var(--folder-border);visibility:hidden;
+}
+.folder-wrapper.popped .folder-action-area{opacity:1;transform:translateY(0);visibility:visible;}
+.folder-wrapper.expanded .folder-action-area{opacity:0;visibility:hidden;}
+.file-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;max-width:220px;}
+.file-tag{font-size:9px;padding:2px 6px;border:1px solid var(--text-color);border-radius:20px;opacity:.7;}
+.file-info-row{display:flex;gap:12px;align-items:center;flex:1;min-width:0;}
+.preview-thumb{
+  width:60px;height:60px;border:1.5px solid var(--text-color);border-radius:8px;overflow:hidden;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-color);
+  font-size:22px;position:relative;
+}
+.preview-thumb img,.preview-thumb video{width:100%;height:100%;object-fit:cover;}
+.preview-thumb .play-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);color:#fff;font-size:16px;}
+.preview-text-snip{font-size:8px;line-height:1.25;padding:4px;overflow:hidden;opacity:.75;font-family:monospace;text-align:left;width:100%;height:100%;}
+.badge-row{display:flex;gap:3px;margin-top:5px;}
+.badge-row span{font-size:11px;}
+.file-info{min-width:0;}
+.file-info h3{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;}
+
+/* ---------- медиа-плеер (фото/видео) в едином стиле приложения ---------- */
+.viewer-media{flex:1;display:flex;flex-direction:column;min-height:0;}
+.media-stage{
+  flex:1;display:flex;align-items:center;justify-content:center;background:#000;
+  border-radius:6px;overflow:hidden;position:relative;min-height:0;
+}
+.media-stage img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .25s ease;}
+.media-stage img.zoomed{transform:scale(1.9);}
+.media-stage video{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;background:#000;}
+.media-center-btn{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid rgba(255,255,255,.8);
+  transition:opacity .2s ease;
+}
+.media-center-btn.fade{opacity:0;}
+.media-controls{padding:10px 2px 0 2px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.media-seek{width:100%;-webkit-appearance:none;background:transparent;}
+.media-seek::-webkit-slider-runnable-track{height:5px;background:rgba(128,128,128,.35);border-radius:6px;}
+.media-seek::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);margin-top:-5.5px;}
+.media-buttons{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.media-btn-group{display:flex;gap:8px;align-items:center;}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;border:1.5px solid var(--text-color);background:var(--folder-bg);
+  display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text-color);flex-shrink:0;
+}
+.icon-btn.active{background:var(--accent);}
+.time-label{font-size:10.5px;font-family:monospace;opacity:.7;min-width:74px;text-align:center;}
+.viewer-other{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.7;font-size:13px;text-align:center;}
+
+.folder-wrapper.expanded{
+  position:fixed;top:50% !important;left:50% !important;width:92vw !important;max-width:640px !important;
+  height:78vh !important;transform:translate(-50%,-50%) !important;z-index:999 !important;
+  cursor:default;transition:all .5s cubic-bezier(.22,1,.36,1);
+}
+.folder-wrapper.expanded .folder-tab{transform:scale(1.08);transform-origin:bottom left;}
+
+#global-blur-overlay{
+  position:fixed;inset:0;background:rgba(100,100,100,.4);backdrop-filter:blur(10px);
+  z-index:900;opacity:0;pointer-events:none;transition:opacity .4s ease;
+}
+#global-blur-overlay.active{opacity:1;pointer-events:auto;}
+
+.folder-content-area{
+  position:absolute;inset:0;padding:16px;background:var(--folder-bg);display:flex;flex-direction:column;
+  opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s;
+}
+.folder-wrapper.expanded .folder-content-area{opacity:1;visibility:visible;transition-delay:.25s;}
+.editor-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--folder-border);padding-bottom:8px;margin-bottom:8px;}
+.editor-text{
+  width:100%;flex:1;resize:none;border:none;outline:none;font-family:inherit;
+  background-image:radial-gradient(var(--text-color) 1px,transparent 1px);
+  background-size:20px 20px;line-height:1.5;padding:10px;background-color:transparent;color:inherit;opacity:.85;
+  font-size:13px;
+}
+.close-link{font-weight:bold;color:#c0392b;font-size:12px;background:none;border:none;}
+.close-link:hover{text-decoration:underline;}
+
+/* кнопка "⋮" — надёжный вход в контекстное меню (плюс long-press) */
+.dots-btn{
+  width:26px;height:26px;border:1.5px solid var(--text-color);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:bold;background:var(--folder-bg);
+  flex-shrink:0;color:var(--text-color);
+}
+
+/* ---------- контекстное меню (замена системного copy/save) ---------- */
+#context-menu{
+  position:fixed;z-index:1200;background:var(--folder-bg);color:var(--text-color);
+  border:1.5px solid var(--text-color);box-shadow:4px 4px 0 rgba(0,0,0,.25);
+  min-width:190px;overflow:hidden;opacity:0;transform:scale(.9);pointer-events:none;
+  transition:opacity .15s ease,transform .15s ease;border-radius:6px;
+}
+#context-menu.open{opacity:1;transform:scale(1);pointer-events:auto;}
+.ctx-item{padding:12px 16px;font-size:12px;font-weight:bold;border-bottom:1px solid rgba(128,128,128,.25);}
+.ctx-item:last-child{border-bottom:none;}
+.ctx-item:hover,.ctx-item:active{background:rgba(255,85,0,.15);}
+.ctx-item.danger{color:#c0392b;}
+
+/* ---------- модалки (rename / tags / new file) ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1300;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-box{
+  background:var(--folder-bg);color:var(--text-color);border:2px solid var(--text-color);
+  box-shadow:6px 6px 0 var(--accent);width:88vw;max-width:340px;padding:20px;border-radius:4px;
+  transform:translateY(10px);transition:transform .2s ease;
+}
+.modal-overlay.open .modal-box{transform:translateY(0);}
+.modal-title{font-weight:bold;font-size:14px;margin-bottom:14px;letter-spacing:.5px;}
+.modal-input{
+  width:100%;padding:10px;border:1.5px solid var(--text-color);font-family:monospace;font-size:13px;
+  margin-bottom:10px;background:transparent;color:var(--text-color);
+}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+.modal-btn{padding:9px 14px;font-size:11px;font-weight:bold;border:1.5px solid var(--text-color);background:transparent;color:var(--text-color);}
+.modal-btn.primary{background:var(--accent);}
+
+/* ---------- панель настроек ---------- */
+#settings-panel{
+  position:fixed;right:-100%;top:0;width:min(400px,92vw);height:100vh;background:var(--bg-color);
+  color:var(--text-color);border-left:1px solid var(--text-color);z-index:1000;
+  transition:right .4s cubic-bezier(.16,1,.3,1),background-color .5s,color .5s;
+  box-shadow:-10px 0 30px rgba(0,0,0,.3);padding:20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;
+}
+#settings-panel.open{right:0;}
+.settings-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--text-color);padding-bottom:14px;margin-bottom:4px;}
+.settings-head h2{font-size:12px;font-weight:bold;opacity:.7;letter-spacing:1px;margin:0;}
+.settings-head button{background:none;border:none;font-weight:bold;font-size:16px;color:var(--text-color);}
+.section-label{font-size:10px;font-weight:bold;opacity:.5;letter-spacing:1px;margin:10px 0 -2px 2px;}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;background:var(--folder-bg);
+  border-radius:14px;padding:12px 14px;transition:background-color .5s;
+}
+.setting-label{font-size:13px;font-weight:500;width:92px;opacity:.75;flex-shrink:0;}
+.slider-container{position:relative;flex:1;margin:0 12px;height:26px;display:flex;align-items:center;}
+input[type=range]{-webkit-appearance:none;width:100%;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{width:100%;height:6px;cursor:pointer;background:rgba(128,128,128,.3);border-radius:6px;}
+input[type=range]::-webkit-slider-thumb{
+  height:20px;width:20px;border-radius:50%;background:var(--accent);cursor:pointer;-webkit-appearance:none;
+  margin-top:-7px;box-shadow:0 2px 4px rgba(0,0,0,.3);
+}
+select{
+  background:transparent;font-weight:500;font-size:13px;outline:none;text-align:right;flex:1;cursor:pointer;
+  color:var(--text-color);border:none;
+}
+select option{color:#000;}
+.toggle-switch{position:relative;width:44px;height:24px;background:#c9c9c9;border-radius:12px;cursor:pointer;transition:background .3s;flex-shrink:0;}
+.toggle-switch.active{background:#34c759;}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .3s;box-shadow:0 2px 4px rgba(0,0,0,.25);}
+.toggle-switch.active::after{transform:translateX(20px);}
+.color-input-wrap{display:flex;justify-content:flex-end;flex:1;}
+input[type=color]{width:32px;height:32px;border:1.5px solid var(--text-color);border-radius:50%;padding:0;background:none;overflow:hidden;cursor:pointer;}
+.stat-line{font-size:11px;opacity:.6;font-family:monospace;text-align:center;margin-top:6px;}
+
+/* ---------- toast ---------- */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:1400;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.toast{
+  background:var(--text-color);color:var(--bg-color);padding:11px 16px;font-size:12px;font-weight:bold;
+  border-radius:6px;box-shadow:2px 2px 0 var(--accent);transform:translateX(120%);transition:transform .3s ease;max-width:80vw;
+}
+.toast.show{transform:translateX(0);}
+.toast.err{background:#c0392b;color:#fff;box-shadow:2px 2px 0 #7a1f18;}
+</style>
+</head>
+<body>
+
+<!-- 1. АВТОРИЗАЦИЯ -->
+<div id="auth-screen">
+  <canvas id="starfield-canvas"></canvas>
+  <div class="auth-card">
+    <div class="auth-title">
+      <svg class="logo-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="3" stroke="#000" stroke-width="2"/>
+        <path d="M7 8h10M7 12h10M7 16h6" stroke="#ff5500" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      EDM data base
+    </div>
+    <p class="auth-sub">SECRET FILES Server</p>
+    <input type="text" id="auth-login" class="auth-input" placeholder="ID" autocomplete="off">
+    <input type="password" id="auth-pass" class="auth-input" placeholder="KEY" autocomplete="off">
+    <div class="auth-error" id="auth-error"></div>
+    <button id="btn-login" class="btn-accent">ENTER SYSTEM</button>
+  </div>
+</div>
+
+<div id="global-blur-overlay"></div>
+
+<!-- 2. ГЛАВНОЕ ПРИЛОЖЕНИЕ -->
+<div id="main-app">
+  <header class="app-header">
+    <div>
+      <div class="app-title">
+        <svg class="logo-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
+          <path d="M7 8h10M7 12h10M7 16h6" stroke="#ff5500" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        EDM data base
+      </div>
+      <p class="app-sub" id="vault-path-hint">SECRET FILES Server</p>
+    </div>
+    <div class="header-btns">
+      <button id="btn-newfile" class="hbtn">+ FILE</button>
+      <button id="btn-upload" class="hbtn">UPLOAD</button>
+      <button id="btn-hide" class="hbtn">HIDE: —</button>
+      <button id="btn-settings" class="hbtn">SETTINGS</button>
+      <button id="btn-logout" class="hbtn dark">LOGOUT</button>
+    </div>
+  </header>
+  <input type="file" id="file-input" class="hidden">
+  <div id="cabinet-container"></div>
+</div>
+
+<!-- 3. ПАНЕЛЬ НАСТРОЕК -->
+<div id="settings-panel">
+  <div class="settings-head">
+    <h2>PATH OPTIONS</h2>
+    <button id="btn-close-settings">✕</button>
+  </div>
+
+  <div class="section-label">ВНЕШНИЙ ВИД</div>
+  <div class="setting-row">
+    <span class="setting-label">Theme</span>
+    <select id="set-theme">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="hacker">Hacker (Matrix)</option>
+    </select>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Shape</span>
+    <select id="set-shape">
+      <option value="rounded">Rounded</option>
+      <option value="rectangle">Rectangle</option>
+      <option value="brutalist">Brutalist</option>
+    </select>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Accent</span>
+    <div class="color-input-wrap"><input type="color" id="set-color" value="#ff5500"></div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Border</span>
+    <div class="slider-container"><input type="range" id="set-width" min="1" max="6" value="1.5" step="0.5"></div>
+    <span id="val-width" style="font-size:12px;width:26px;text-align:right;">1.5</span>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Radius</span>
+    <div class="slider-container"><input type="range" id="set-radius" min="0" max="30" value="12"></div>
+    <span id="val-radius" style="font-size:12px;width:26px;text-align:right;">12</span>
+  </div>
+
+  <div class="section-label">ПОВЕДЕНИЕ</div>
+  <div class="setting-row">
+    <span class="setting-label">Autosave</span>
+    <div class="toggle-switch" id="set-autosave"></div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Sound FX</span>
+    <div class="toggle-switch active" id="set-sound"></div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Haptics</span>
+    <div class="toggle-switch active" id="set-haptics"></div>
+  </div>
+  <div class="setting-row">
+    <span class="setting-label">Hide vault</span>
+    <div class="toggle-switch" id="set-hide-toggle"></div>
+  </div>
+
+  <div class="section-label">СЕССИЯ</div>
+  <div class="stat-line" id="settings-stats">— файлов, — KB</div>
+  <button id="btn-wipe-token" class="modal-btn" style="width:100%;margin-top:4px;">Забыть вход на этом устройстве</button>
+</div>
+
+<!-- 4. КОНТЕКСТНОЕ МЕНЮ -->
+<div id="context-menu">
+  <div class="ctx-item" data-action="open">✎ Открыть / редактировать</div>
+  <div class="ctx-item" data-action="rename">✏ Переименовать</div>
+  <div class="ctx-item" data-action="tags">🏷 Теги</div>
+  <div class="ctx-item danger" data-action="delete">🗑 Удалить</div>
+</div>
+
+<!-- 5. МОДАЛКИ -->
+<div class="modal-overlay" id="modal-rename">
+  <div class="modal-box">
+    <div class="modal-title">ПЕРЕИМЕНОВАТЬ</div>
+    <input type="text" id="rename-input" class="modal-input" placeholder="новое имя файла">
+    <div class="modal-actions">
+      <button class="modal-btn" data-close="modal-rename">Отмена</button>
+      <button class="modal-btn primary" id="rename-confirm">ОК</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-tags">
+  <div class="modal-box">
+    <div class="modal-title">ТЕГИ (через запятую)</div>
+    <input type="text" id="tags-input" class="modal-input" placeholder="важное, идея, тест">
+    <div class="modal-actions">
+      <button class="modal-btn" data-close="modal-tags">Отмена</button>
+      <button class="modal-btn primary" id="tags-confirm">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-newfile">
+  <div class="modal-box">
+    <div class="modal-title">НОВЫЙ ФАЙЛ</div>
+    <input type="text" id="newfile-input" class="modal-input" placeholder="название.txt">
+    <div class="modal-actions">
+      <button class="modal-btn" data-close="modal-newfile">Отмена</button>
+      <button class="modal-btn primary" id="newfile-confirm">Создать</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirm-delete">
+  <div class="modal-box">
+    <div class="modal-title">Удалить «<span id="del-filename"></span>»?</div>
+    <div class="modal-actions">
+      <button class="modal-btn" data-close="modal-confirm-delete">Отмена</button>
+      <button class="modal-btn primary" id="delete-confirm" style="background:#c0392b;color:#fff;">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+(() => {
+"use strict";
+
+// ============================================================
+// 0. СОСТОЯНИЕ
+// ============================================================
+const state = {
+  token: localStorage.getItem("vault_token") || null,
+  files: [],
+  activeFile: null,   // имя файла в редакторе
+  dirty: false,
+  settings: Object.assign({
+    theme:"light", shape:"rounded", accent:"#ff5500",
+    borderWidth:1.5, radius:12, autosave:false, sound:true, haptics:true
+  }, JSON.parse(localStorage.getItem("vault_settings") || "{}"))
+};
+
+// ============================================================
+// 1. ЗВЁЗДНОЕ НЕБО (исправлено: DPR-скейлинг + увеличена яркость/размер звёзд)
+// ============================================================
+const canvas = document.getElementById('starfield-canvas');
+const ctx = canvas.getContext('2d');
+let cw = 0, ch = 0, dpr = Math.max(1, window.devicePixelRatio || 1);
+let stars = [], comets = [];
+
+function resizeCanvas(){
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  cw = window.innerWidth; ch = window.innerHeight;
+  canvas.width = cw * dpr;
+  canvas.height = ch * dpr;
+  canvas.style.width = cw + "px";
+  canvas.style.height = ch + "px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawStarShape(cx, cy, outerR, innerR, rotation){
+  const spikes = 5;
+  let rot = (Math.PI/2*3) + rotation;
+  const step = Math.PI / spikes;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerR);
+  for(let i=0;i<spikes;i++){
+    let x = cx + Math.cos(rot) * outerR;
+    let y = cy + Math.sin(rot) * outerR;
+    ctx.lineTo(x, y);
+    rot += step;
+    x = cx + Math.cos(rot) * innerR;
+    y = cy + Math.sin(rot) * innerR;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerR);
+  ctx.closePath();
+  ctx.fill();
+}
+
+class Star{
+  constructor(){
+    this.x = Math.random()*cw; this.y = Math.random()*ch;
+    this.outerR = Math.random()*0.9 + 0.7;     // маленькие звёздочки
+    this.innerR = this.outerR * 0.45;
+    this.rotation = Math.random()*Math.PI*2;
+    this.alpha = Math.random()*0.5 + 0.35;
+    this.alphaChange = (Math.random()*0.015)-0.0075;
+    this.twinkle = Math.random() > 0.6;
+  }
+  draw(){
+    if(this.twinkle){
+      this.alpha += this.alphaChange;
+      if(this.alpha <= 0.3 || this.alpha >= 0.95){ this.alphaChange *= -1; }
+    }
+    ctx.fillStyle = `rgba(255,255,255,${this.alpha})`;
+    drawStarShape(this.x, this.y, this.outerR, this.innerR, this.rotation);
+  }
+}
+class Comet{
+  constructor(){
+    this.x = cw + Math.random()*200; this.y = (Math.random()*ch)/2 - 200;
+    this.speed = Math.random()*8 + 10;
+    this.angle = Math.PI/4 + (Math.random()*0.2 - 0.1);
+    this.vx = -Math.cos(this.angle)*this.speed; this.vy = Math.sin(this.angle)*this.speed;
+    this.history = []; this.active = true;
+  }
+  update(){
+    this.history.push({x:this.x,y:this.y});
+    if(this.history.length > 20) this.history.shift();
+    this.x += this.vx; this.y += this.vy;
+    if(this.x < -200 || this.y > ch + 200) this.active = false;
+  }
+  draw(){
+    if(!this.active) return;
+    ctx.save();
+    for(let i=0;i<this.history.length;i++){
+      const p = this.history[i];
+      ctx.globalAlpha = (i/this.history.length)*0.5;
+      ctx.fillStyle = i % 2 === 0 ? '#ffaa00' : '#ffffff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.6, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+for(let i=0;i<90;i++) stars.push(new Star());
+
+let rafId = null;
+function animateSpace(){
+  ctx.clearRect(0,0,cw,ch);
+  stars.forEach(s => s.draw());
+  if(Math.random() < 0.01) comets.push(new Comet());
+  comets.forEach(c => { c.update(); c.draw(); });
+  comets = comets.filter(c => c.active);
+  rafId = requestAnimationFrame(animateSpace);
+}
+animateSpace();
+
+// ============================================================
+// 2. ВСПОМОГАТЕЛЬНОЕ
+// ============================================================
+function toast(msg, isErr=false){
+  const cont = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' err' : '');
+  el.textContent = msg;
+  cont.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, 2600);
+}
+
+function vibrate(ms){
+  if(state.settings.haptics && navigator.vibrate) navigator.vibrate(ms);
+}
+
+let audioCtx = null;
+function beep(freq=880, dur=0.06){
+  if(!state.settings.sound) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square'; o.frequency.value = freq;
+    g.gain.value = 0.04;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+
+function fmtSize(bytes){
+  if(bytes < 1024) return bytes + " B";
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
+  return (bytes/1024/1024).toFixed(1) + " MB";
+}
+
+function extType(name){
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = {txt:'text', md:'text', json:'data', py:'code', js:'code', html:'code',
+    css:'code', csv:'data', log:'log', png:'image', jpg:'image', jpeg:'image', gif:'image'};
+  return map[ext] || 'file';
+}
+
+const IMAGE_EXT = new Set(['png','jpg','jpeg','gif','webp','bmp','svg']);
+const VIDEO_EXT = new Set(['mp4','webm','mov','mkv','m4v','avi']);
+const AUDIO_EXT = new Set(['mp3','wav','ogg','m4a','flac']);
+const TEXT_EXT  = new Set(['txt','md','json','py','js','html','css','csv','log','yml','yaml','xml','ini','cfg','sh']);
+
+function mediaCategory(name){
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if(IMAGE_EXT.has(ext)) return 'image';
+  if(VIDEO_EXT.has(ext)) return 'video';
+  if(AUDIO_EXT.has(ext)) return 'audio';
+  if(TEXT_EXT.has(ext)) return 'text';
+  return 'other';
+}
+
+function previewPlaceholder(cat){
+  const icons = {image:'🖼️', video:'🎞️', audio:'🎵', text:'📄', other:'📦'};
+  return icons[cat] || '📦';
+}
+
+function fileUrl(name, raw){
+  const q = 'token=' + encodeURIComponent(state.token) + (raw ? '&raw=1' : '');
+  return '/api/file/' + encodeURIComponent(name) + '?' + q;
+}
+
+// ============================================================
+// 3. API-КЛИЕНТ
+// ============================================================
+async function api(path, options = {}){
+  options.headers = Object.assign({}, options.headers, {
+    "Authorization": "Bearer " + state.token
+  });
+  if(options.body && !(options.body instanceof FormData)){
+    options.headers["Content-Type"] = "application/json";
+  }
+  let res;
+  try{
+    res = await fetch(path, options);
+  }catch(e){
+    toast("Нет соединения с локальным сервером", true);
+    throw e;
+  }
+  if(res.status === 401){
+    toast("Сессия истекла, войдите снова", true);
+    doLogout();
+    throw new Error("Unauthorized");
+  }
+  const ct = res.headers.get("content-type") || "";
+  if(ct.includes("application/json")) return res.json();
+  return res;
+}
+
+// ============================================================
+// 4. АВТОРИЗАЦИЯ
+// ============================================================
+const authScreen = document.getElementById('auth-screen');
+const mainApp = document.getElementById('main-app');
+const authError = document.getElementById('auth-error');
+
+async function doLogin(){
+  const username = document.getElementById('auth-login').value.trim();
+  const password = document.getElementById('auth-pass').value;
+  authError.textContent = "";
+  if(!username || !password){ authError.textContent = "Введите ID и KEY"; return; }
+  try{
+    const res = await fetch('/api/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if(data.success){
+      state.token = data.token;
+      localStorage.setItem('vault_token', state.token);
+      enterApp();
+    }else{
+      authError.textContent = data.error || "Access Denied";
+      vibrate(80);
+    }
+  }catch(e){
+    authError.textContent = "Сервер недоступен. Проверь, запущен ли python app.py";
+  }
+}
+
+function enterApp(){
+  authScreen.classList.add('hidden-auth');
+  setTimeout(() => {
+    mainApp.classList.add('visible');
+    refreshStatus();
+    loadFiles();
+  }, 450);
+}
+
+function doLogout(){
+  mainApp.classList.remove('visible');
+  setTimeout(() => authScreen.classList.remove('hidden-auth'), 400);
+}
+
+document.getElementById('btn-login').addEventListener('click', doLogin);
+document.getElementById('auth-pass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+document.getElementById('btn-logout').addEventListener('click', () => {
+  localStorage.removeItem('vault_token');
+  state.token = null;
+  doLogout();
+});
+document.getElementById('btn-wipe-token').addEventListener('click', () => {
+  localStorage.removeItem('vault_token');
+  state.token = null;
+  toast("Токен забыт на этом устройстве");
+  closeSettings();
+  doLogout();
+});
+
+// автовход, если токен уже сохранён локально
+if(state.token){ enterApp(); }
+
+// ============================================================
+// 5. СТАТУС / HIDE
+// ============================================================
+async function refreshStatus(){
+  try{
+    const data = await api('/api/status');
+    document.getElementById('vault-path-hint').textContent =
+      (data.hidden ? "СКРЫТО // " : "ВИДИМО // ") + data.path;
+    const btn = document.getElementById('btn-hide');
+    btn.textContent = "HIDE: " + (data.hidden ? "ON" : "OFF");
+    document.getElementById('set-hide-toggle').classList.toggle('active', !!data.hidden);
+    document.getElementById('settings-stats').textContent =
+      `${state.files.length} файлов, ${fmtSize(data.total_size || 0)}`;
+  }catch(e){}
+}
+
+async function toggleHide(){
+  try{
+    const data = await api('/api/toggle_hide', {method:'POST'});
+    if(data.success){
+      toast(data.hidden ? "Папка скрыта" : "Папка снова видима");
+      refreshStatus();
+    }
+  }catch(e){ toast("Ошибка переключения видимости", true); }
+}
+document.getElementById('btn-hide').addEventListener('click', toggleHide);
+document.getElementById('set-hide-toggle').addEventListener('click', toggleHide);
+
+// ============================================================
+// 6. ФАЙЛЫ / КАРТОТЕКА
+// ============================================================
+const cabinet = document.getElementById('cabinet-container');
+const overlay = document.getElementById('global-blur-overlay');
+const OFFSET = 36;
+
+async function loadFiles(){
+  try{
+    const data = await api('/api/files');
+    if(data.success){
+      state.files = data.files;
+      renderFolders();
+      refreshStatus();
+    }
+  }catch(e){}
+}
+
+function renderFolders(){
+  cabinet.innerHTML = '';
+  if(state.files.length === 0){
+    cabinet.innerHTML = '<div class="empty-hint">Пусто. Нажми «+ FILE», чтобы создать первую запись.</div>';
+    return;
+  }
+  cabinet.style.height = `${(state.files.length * OFFSET) + 220}px`;
+
+  const tabPositions = ['0px','calc(20% - 30px)','calc(40% - 60px)','calc(60% - 90px)','calc(80% - 120px)'];
+
+  state.files.forEach((file, index) => {
+    const folder = document.createElement('div');
+    folder.className = 'folder-wrapper';
+    folder.dataset.name = file.name;
+    folder.style.top = `${index * OFFSET}px`;
+    folder.style.zIndex = index;
+
+    const tagsHtml = (file.tags||[]).map(t => `<span class="file-tag">${escapeHtml(t)}</span>`).join('');
+    const cat = mediaCategory(file.name);
+    const badges = (file.liked ? '<span>❤️</span>' : '') + (file.favorite ? '<span>⭐</span>' : '');
+
+    folder.innerHTML = `
+      <div class="folder-tab" style="left:${tabPositions[index % tabPositions.length]};">
+        <span>${String(index+1).padStart(3,'0')}</span>
+        <span class="tab-name">${escapeHtml(file.name)}</span>
+        ${badges ? `<span style="font-size:10px;">${badges}</span>` : ''}
+      </div>
+      <div class="folder-body">
+        <div class="folder-action-area border-adaptive">
+          <div class="file-info-row">
+            <div class="preview-thumb" data-preview>${previewPlaceholder(cat)}</div>
+            <div class="file-info">
+              <h3 style="font-weight:bold;font-size:15px;margin:0;">${escapeHtml(file.name)}</h3>
+              <p style="font-size:11px;opacity:.6;margin:4px 0 0 0;">TYPE: ${cat} // ${fmtSize(file.size)}</p>
+              <div class="file-tags">${tagsHtml}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+            <div class="dots-btn" data-dots="1">⋮</div>
+            <button class="btn-accent open-btn" style="width:auto;padding:10px 14px;font-size:11px;">${cat==='text'||cat==='code'||cat==='data'||cat==='log' ? 'READ_FILE':'ОТКРЫТЬ'}</button>
+          </div>
+        </div>
+        <div class="folder-content-area border-adaptive">
+          <div class="editor-head">
+            <h2 style="font-size:13px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;">${escapeHtml(file.name)}</h2>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div class="icon-btn" data-like style="width:30px;height:30px;font-size:13px;">❤️</div>
+              <div class="icon-btn" data-fav style="width:30px;height:30px;font-size:13px;">⭐</div>
+              <button class="close-link close-folder-btn">[ X ]</button>
+            </div>
+          </div>
+          <div class="viewer-slot" data-viewer-slot style="flex:1;display:flex;flex-direction:column;min-height:0;"></div>
+        </div>
+      </div>
+    `;
+
+    // тап по свёрнутой папке -> pop (небольшое выдвижение) = ПРЕДПРОСМОТР
+    folder.addEventListener('click', (e) => {
+      if(folder.classList.contains('expanded')) return;
+      if(e.target.closest('.open-btn') || e.target.closest('[data-dots]')) return;
+      document.querySelectorAll('.folder-wrapper').forEach(f => {
+        if(f !== folder && !f.classList.contains('expanded')) f.classList.remove('popped');
+      });
+      folder.classList.toggle('popped');
+      beep(folder.classList.contains('popped') ? 660 : 440);
+      if(folder.classList.contains('popped')) loadPreview(folder, file);
+    });
+
+    folder.querySelector('.open-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      openViewer(folder, file);
+    });
+
+    folder.querySelector('.close-folder-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeEditor(folder);
+    });
+
+    folder.querySelector('[data-like]').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await toggleMeta(file, 'liked', e.currentTarget);
+    });
+    folder.querySelector('[data-fav]').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await toggleMeta(file, 'favorite', e.currentTarget);
+    });
+
+    // "⋮" -> контекстное меню
+    folder.querySelector('[data-dots]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      openContextMenu(rect.left, rect.bottom + 6, file.name);
+    });
+
+    // long-press по всей карточке -> тоже контекстное меню (вместо системного copy/save)
+    attachLongPress(folder, () => {
+      const rect = folder.getBoundingClientRect();
+      openContextMenu(rect.left + 20, rect.top + 60, file.name);
+    });
+
+    cabinet.appendChild(folder);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- ПРЕДПРОСМОТР (лёгкое выдвижение папки) ----------
+async function loadPreview(folder, file){
+  const box = folder.querySelector('[data-preview]');
+  if(!box || box.dataset.loaded) return;
+  const cat = mediaCategory(file.name);
+
+  if(cat === 'image'){
+    box.dataset.loaded = '1';
+    box.innerHTML = `<img src="${fileUrl(file.name)}" loading="lazy" alt="">`;
+  }else if(cat === 'video'){
+    box.dataset.loaded = '1';
+    box.innerHTML = `<div class="play-badge">▶</div>`;
+  }else if(cat === 'text'){
+    try{
+      const data = await api('/api/file/' + encodeURIComponent(file.name));
+      if(data.success){
+        box.dataset.loaded = '1';
+        const snippet = data.content.slice(0, 140);
+        box.innerHTML = `<div class="preview-text-snip">${escapeHtml(snippet)}</div>`;
+      }
+    }catch(e){}
+  }
+  // 'other' и 'audio' остаются с иконкой-заглушкой — грузить незачем
+}
+
+// ---------- ПОЛНЫЙ ПРОСМОТР (разворот папки на весь экран) ----------
+async function openViewer(folder, file){
+  folder.dataset.origZ = folder.style.zIndex;
+  folder.style.zIndex = 1000;
+  folder.classList.remove('popped');
+  folder.classList.add('expanded');
+  overlay.classList.add('active');
+  state.activeFile = file.name;
+
+  const likeBtn = folder.querySelector('[data-like]');
+  const favBtn = folder.querySelector('[data-fav]');
+  likeBtn.classList.toggle('active', !!file.liked);
+  favBtn.classList.toggle('active', !!file.favorite);
+
+  const slot = folder.querySelector('[data-viewer-slot]');
+  const cat = mediaCategory(file.name);
+
+  if(cat === 'text'){
+    buildTextViewer(slot, file);
+  }else if(cat === 'image'){
+    buildImageViewer(slot, file);
+  }else if(cat === 'video'){
+    buildVideoViewer(slot, file);
+  }else{
+    slot.innerHTML = `<div class="viewer-other">📦<br>Предпросмотр для этого типа файла не поддерживается.<br>Файл можно переименовать / удалить / пометить тегом через меню ⋮.</div>`;
+  }
+}
+
+function buildTextViewer(slot, file){
+  slot.innerHTML = `
+    <textarea class="editor-text" placeholder="Загрузка...">Загрузка...</textarea>
+    <div class="mt-4 flex justify-end gap-2">
+      <span class="stat-line" style="margin:0;flex:1;text-align:left;"></span>
+      <button class="btn-accent save-btn" style="width:auto;padding:10px 16px;font-size:11px;">SAVE LOG</button>
+    </div>`;
+  const ta = slot.querySelector('.editor-text');
+  api('/api/file/' + encodeURIComponent(file.name)).then(data => {
+    if(data.success){ ta.value = data.content; }
+    else { ta.value = ""; ta.disabled = true; ta.placeholder = "Не удалось загрузить"; }
+  }).catch(() => { ta.value = ""; toast("Не удалось загрузить файл", true); });
+
+  slot.querySelector('.save-btn').addEventListener('click', () => saveFile(file.name, ta.value));
+  if(state.settings.autosave){
+    let deb = null;
+    ta.oninput = () => { clearTimeout(deb); deb = setTimeout(() => saveFile(file.name, ta.value, true), 900); };
+  }
+}
+
+function buildImageViewer(slot, file){
+  slot.innerHTML = `
+    <div class="viewer-media">
+      <div class="media-stage"><img src="${fileUrl(file.name)}" alt=""></div>
+      <div class="media-controls">
+        <div class="media-buttons">
+          <span class="time-label">Двойной тап — zoom</span>
+          <div class="media-btn-group">
+            <div class="icon-btn like-btn ${file.liked?'active':''}">❤️</div>
+            <div class="icon-btn fav-btn ${file.favorite?'active':''}">⭐</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const img = slot.querySelector('img');
+  img.addEventListener('dblclick', () => img.classList.toggle('zoomed'));
+  let lastTap = 0;
+  img.addEventListener('touchend', () => {
+    const now = Date.now();
+    if(now - lastTap < 300) img.classList.toggle('zoomed');
+    lastTap = now;
+  });
+  slot.querySelector('.like-btn').addEventListener('click', (e) => toggleMeta(file, 'liked', e.currentTarget, true));
+  slot.querySelector('.fav-btn').addEventListener('click', (e) => toggleMeta(file, 'favorite', e.currentTarget, true));
+}
+
+function buildVideoViewer(slot, file){
+  slot.innerHTML = `
+    <div class="viewer-media">
+      <div class="media-stage">
+        <video src="${fileUrl(file.name)}" preload="metadata" playsinline></video>
+        <div class="media-center-btn">▶</div>
+      </div>
+      <div class="media-controls">
+        <input type="range" class="media-seek" min="0" max="100" value="0" step="0.1">
+        <div class="media-buttons">
+          <span class="time-label" id="time-label">0:00 / 0:00</span>
+          <div class="media-btn-group">
+            <div class="icon-btn mute-btn">🔊</div>
+            <div class="icon-btn like-btn ${file.liked?'active':''}">❤️</div>
+            <div class="icon-btn fav-btn ${file.favorite?'active':''}">⭐</div>
+            <div class="icon-btn full-btn">⛶</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const video = slot.querySelector('video');
+  const centerBtn = slot.querySelector('.media-center-btn');
+  const seek = slot.querySelector('.media-seek');
+  const timeLabel = slot.querySelector('#time-label');
+  const muteBtn = slot.querySelector('.mute-btn');
+  const fullBtn = slot.querySelector('.full-btn');
+
+  function fmtTime(s){
+    if(!isFinite(s)) return "0:00";
+    const m = Math.floor(s/60), sec = Math.floor(s%60);
+    return m + ":" + String(sec).padStart(2,'0');
+  }
+  function togglePlay(){
+    if(video.paused){ video.play(); } else { video.pause(); }
+  }
+  centerBtn.addEventListener('click', togglePlay);
+  slot.querySelector('.media-stage').addEventListener('click', (e) => {
+    if(e.target === video) togglePlay();
+  });
+  video.addEventListener('play', () => { centerBtn.textContent = '❚❚'; centerBtn.classList.add('fade'); beep(700); });
+  video.addEventListener('pause', () => { centerBtn.textContent = '▶'; centerBtn.classList.remove('fade'); });
+  video.addEventListener('loadedmetadata', () => {
+    seek.max = video.duration || 0;
+    timeLabel.textContent = fmtTime(0) + ' / ' + fmtTime(video.duration);
+  });
+  video.addEventListener('timeupdate', () => {
+    if(!seek.dragging){ seek.value = video.currentTime; }
+    timeLabel.textContent = fmtTime(video.currentTime) + ' / ' + fmtTime(video.duration);
+  });
+  seek.addEventListener('input', () => { video.currentTime = parseFloat(seek.value); });
+  muteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    muteBtn.textContent = video.muted ? '🔇' : '🔊';
+    muteBtn.classList.toggle('active', video.muted);
+  });
+  fullBtn.addEventListener('click', () => {
+    const stage = slot.querySelector('.media-stage');
+    if(stage.requestFullscreen) stage.requestFullscreen();
+  });
+  slot.querySelector('.like-btn').addEventListener('click', (e) => toggleMeta(file, 'liked', e.currentTarget, true));
+  slot.querySelector('.fav-btn').addEventListener('click', (e) => toggleMeta(file, 'favorite', e.currentTarget, true));
+}
+
+function closeEditor(folder){
+  const video = folder.querySelector('video');
+  if(video){ video.pause(); }
+  folder.classList.remove('expanded');
+  overlay.classList.remove('active');
+  state.activeFile = null;
+  setTimeout(() => {
+    if(!folder.classList.contains('expanded')){
+      folder.style.zIndex = folder.dataset.origZ;
+      folder.querySelector('[data-viewer-slot]').innerHTML = '';
+    }
+  }, 500);
+}
+
+async function saveFile(name, content, silent=false){
+  try{
+    const data = await api('/api/save', {method:'POST', body: JSON.stringify({name, content})});
+    if(data.success){
+      if(!silent){ toast("Сохранено: " + name); beep(880); }
+    }else{
+      toast("Ошибка сохранения", true);
+    }
+  }catch(e){ if(!silent) toast("Ошибка сохранения", true); }
+}
+
+async function toggleMeta(file, field, btnEl, isHeaderBtn){
+  const newVal = !file[field];
+  try{
+    const data = await api('/api/meta', {method:'POST', body: JSON.stringify({name:file.name, [field]:newVal})});
+    if(data.success){
+      file[field] = newVal;
+      btnEl.classList.toggle('active', newVal);
+      vibrate(20);
+      if(!isHeaderBtn){} // header duplicate buttons kept in sync on next render
+      // синхронизируем парную кнопку (в action-area шапке просмотра), если есть
+      const folder = document.querySelector(`.folder-wrapper[data-name="${cssEscape(file.name)}"]`);
+      if(folder){
+        const twin = folder.querySelector(field === 'liked' ? '[data-like]' : '[data-fav]');
+        if(twin) twin.classList.toggle('active', newVal);
+      }
+    }
+  }catch(e){ toast("Ошибка", true); }
+}
+
+// ---------- новый файл ----------
+document.getElementById('btn-newfile').addEventListener('click', () => openModal('modal-newfile'));
+document.getElementById('newfile-confirm').addEventListener('click', async () => {
+  const name = document.getElementById('newfile-input').value.trim();
+  if(!name){ toast("Введите имя файла", true); return; }
+  try{
+    const data = await api('/api/create', {method:'POST', body: JSON.stringify({name, content:""})});
+    if(data.success){
+      toast("Файл создан: " + name);
+      closeModal('modal-newfile');
+      document.getElementById('newfile-input').value = "";
+      loadFiles();
+    }else{
+      toast(data.error || "Ошибка", true);
+    }
+  }catch(e){}
+});
+
+// ---------- загрузка файла ----------
+document.getElementById('btn-upload').addEventListener('click', () => document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  try{
+    const data = await api('/api/upload', {method:'POST', body: fd});
+    if(data.success){ toast("Загружено: " + data.name); loadFiles(); }
+    else toast(data.error || "Ошибка загрузки", true);
+  }catch(err){}
+  e.target.value = "";
+});
+
+// ============================================================
+// 7. LONG-PRESS (замена системного copy/download меню)
+// ============================================================
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function attachLongPress(el, callback){
+  let timer = null;
+  let moved = false;
+  const start = (e) => {
+    moved = false;
+    timer = setTimeout(() => {
+      if(!moved){ vibrate(35); callback(e); }
+    }, 480);
+  };
+  const cancel = () => { clearTimeout(timer); };
+  const onMove = () => { moved = true; clearTimeout(timer); };
+
+  el.addEventListener('touchstart', start, {passive:true});
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchmove', onMove, {passive:true});
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', cancel);
+  el.addEventListener('mouseleave', cancel);
+}
+
+// ============================================================
+// 8. КОНТЕКСТНОЕ МЕНЮ
+// ============================================================
+const ctxMenu = document.getElementById('context-menu');
+let ctxTarget = null;
+
+function openContextMenu(x, y, filename){
+  ctxTarget = filename;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  ctxMenu.style.left = Math.min(x, vw - 210) + 'px';
+  ctxMenu.style.top = Math.min(y, vh - 180) + 'px';
+  ctxMenu.classList.add('open');
+}
+function closeContextMenu(){ ctxMenu.classList.remove('open'); }
+
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#context-menu') && !e.target.closest('[data-dots]')) closeContextMenu();
+});
+
+ctxMenu.addEventListener('click', (e) => {
+  const item = e.target.closest('.ctx-item');
+  if(!item || !ctxTarget) return;
+  const action = item.dataset.action;
+  const name = ctxTarget;
+  closeContextMenu();
+
+  if(action === 'open'){
+    const folder = document.querySelector(`.folder-wrapper[data-name="${cssEscape(name)}"]`);
+    const file = state.files.find(f => f.name === name);
+    if(folder && file) openViewer(folder, file);
+  }else if(action === 'rename'){
+    document.getElementById('rename-input').value = name;
+    openModal('modal-rename');
+    document.getElementById('rename-confirm').onclick = async () => {
+      const newName = document.getElementById('rename-input').value.trim();
+      if(!newName || newName === name){ closeModal('modal-rename'); return; }
+      try{
+        const data = await api('/api/rename', {method:'POST', body: JSON.stringify({old_name:name, new_name:newName})});
+        if(data.success){ toast("Переименовано"); closeModal('modal-rename'); loadFiles(); }
+        else toast(data.error || "Ошибка", true);
+      }catch(err){}
+    };
+  }else if(action === 'tags'){
+    const file = state.files.find(f => f.name === name);
+    document.getElementById('tags-input').value = (file && file.tags || []).join(', ');
+    openModal('modal-tags');
+    document.getElementById('tags-confirm').onclick = async () => {
+      const tags = document.getElementById('tags-input').value.split(',').map(t=>t.trim()).filter(Boolean);
+      try{
+        const data = await api('/api/meta', {method:'POST', body: JSON.stringify({name, tags})});
+        if(data.success){ toast("Теги обновлены"); closeModal('modal-tags'); loadFiles(); }
+      }catch(err){}
+    };
+  }else if(action === 'delete'){
+    document.getElementById('del-filename').textContent = name;
+    openModal('modal-confirm-delete');
+    document.getElementById('delete-confirm').onclick = async () => {
+      try{
+        const data = await api('/api/delete', {method:'POST', body: JSON.stringify({name})});
+        if(data.success){ toast("Удалено: " + name); closeModal('modal-confirm-delete'); loadFiles(); }
+        else toast(data.error || "Ошибка", true);
+      }catch(err){}
+    };
+  }
+});
+
+function cssEscape(s){ return String(s).replace(/["\\]/g, '\\$&'); }
+
+// ============================================================
+// 9. МОДАЛКИ (универсально)
+// ============================================================
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close));
+});
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', (e) => { if(e.target === ov) ov.classList.remove('open'); });
+});
+
+// ============================================================
+// 10. НАСТРОЙКИ
+// ============================================================
+const settingsPanel = document.getElementById('settings-panel');
+document.getElementById('btn-settings').addEventListener('click', () => {
+  settingsPanel.classList.add('open');
+  overlay.classList.add('active');
+});
+document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+function closeSettings(){
+  settingsPanel.classList.remove('open');
+  if(!document.querySelector('.folder-wrapper.expanded')) overlay.classList.remove('active');
+}
+
+function applySettings(){
+  const s = state.settings;
+  const root = document.documentElement;
+  if(s.theme === 'dark'){
+    root.style.setProperty('--bg-color', '#121212');
+    root.style.setProperty('--text-color', '#ffffff');
+    root.style.setProperty('--folder-bg', '#222222');
+    root.style.setProperty('--folder-border', '#444444');
+  }else if(s.theme === 'hacker'){
+    root.style.setProperty('--bg-color', '#050505');
+    root.style.setProperty('--text-color', '#00ff00');
+    root.style.setProperty('--folder-bg', '#0a0a0a');
+    root.style.setProperty('--folder-border', '#00cc00');
+  }else{
+    root.style.setProperty('--bg-color', '#e5e5e5');
+    root.style.setProperty('--text-color', '#000000');
+    root.style.setProperty('--folder-bg', '#f2f2f2');
+    root.style.setProperty('--folder-border', '#1a1a1a');
+  }
+  root.style.setProperty('--accent', s.accent);
+  root.style.setProperty('--bwidth', s.borderWidth + 'px');
+
+  let radius = s.radius;
+  if(s.shape === 'rectangle') radius = 0;
+  if(s.shape === 'brutalist') radius = 0;
+  root.style.setProperty('--radius', radius + 'px');
+  document.querySelectorAll('.folder-body').forEach(el => {
+    el.style.borderRadius = (s.shape === 'brutalist') ? '0' : (radius + 'px');
+    el.style.boxShadow = (s.shape === 'brutalist') ? '5px 5px 0 var(--text-color)' : '';
+  });
+
+  document.getElementById('set-theme').value = s.theme;
+  document.getElementById('set-shape').value = s.shape;
+  document.getElementById('set-color').value = s.accent;
+  document.getElementById('set-width').value = s.borderWidth;
+  document.getElementById('val-width').textContent = s.borderWidth;
+  document.getElementById('set-radius').value = s.radius;
+  document.getElementById('val-radius').textContent = s.radius;
+  document.getElementById('set-autosave').classList.toggle('active', s.autosave);
+  document.getElementById('set-sound').classList.toggle('active', s.sound);
+  document.getElementById('set-haptics').classList.toggle('active', s.haptics);
+
+  localStorage.setItem('vault_settings', JSON.stringify(s));
+}
+
+document.getElementById('set-theme').addEventListener('change', e => { state.settings.theme = e.target.value; applySettings(); });
+document.getElementById('set-shape').addEventListener('change', e => { state.settings.shape = e.target.value; applySettings(); });
+document.getElementById('set-color').addEventListener('input', e => { state.settings.accent = e.target.value; applySettings(); });
+document.getElementById('set-width').addEventListener('input', e => { state.settings.borderWidth = parseFloat(e.target.value); applySettings(); });
+document.getElementById('set-radius').addEventListener('input', e => { state.settings.radius = parseInt(e.target.value); applySettings(); });
+document.getElementById('set-autosave').addEventListener('click', function(){ state.settings.autosave = !state.settings.autosave; applySettings(); });
+document.getElementById('set-sound').addEventListener('click', function(){ state.settings.sound = !state.settings.sound; applySettings(); beep(600); });
+document.getElementById('set-haptics').addEventListener('click', function(){ state.settings.haptics = !state.settings.haptics; applySettings(); vibrate(20); });
+
+applySettings();
+
+})();
+</script>
+</body>
+</html>
