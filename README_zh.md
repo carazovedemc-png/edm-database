@@ -1,5 +1,11 @@
- 🇬🇧 English  |  🇷🇺 Русский  |  🇨🇳 中文 
 <div align="center">
+
+[![English](https://img.shields.io/badge/LANG-🇬🇧%20English-lightgrey)](README.md)
+[![Русский](https://img.shields.io/badge/LANG-🇷🇺%20Русский-lightgrey)](README_ru.md)
+[![中文](https://img.shields.io/badge/LANG-🇨🇳%20中文-red)](README_zh.md)
+
+</div>
+
 # EDM Data Base // SECRET FILES
 **一个完全离线、支持自托管的机密文件保险箱，拥有黑客风格 (Brutalist/Hacker) 的 UI。**
 License: MIT
