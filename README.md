@@ -1,5 +1,11 @@
- 🇬🇧 English  |  🇷🇺 Русский  |  🇨🇳 中文 
 <div align="center">
+
+[![English](https://img.shields.io/badge/LANG-🇬🇧%20English-blue)](README.md)
+[![Русский](https://img.shields.io/badge/LANG-🇷🇺%20Русский-lightgrey)](README_ru.md)
+[![中文](https://img.shields.io/badge/LANG-🇨🇳%20中文-red)](README_zh.md)
+
+</div>
+
 # EDM Data Base // SECRET FILES
 **A fully offline, self-hosted file vault with a Brutalist/Hacker UI.**
 License: MIT
