@@ -1,5 +1,9 @@
- 🇬🇧 English  |  🇷🇺 Русский  |  🇨🇳 中文 
-<div align="center">
+[![English](https://img.shields.io/badge/LANG-🇬🇧%20English-lightgrey)](README.md)
+[![Русский](https://img.shields.io/badge/LANG-🇷🇺%20Русский-blue)](README_ru.md)
+[![中文](https://img.shields.io/badge/LANG-🇨🇳%20中文-red)](README_zh.md)
+
+</div>
+
 # EDM Data Base // SECRET FILES
 **Полностью автономное, локальное файловое хранилище с Brutalist/Hacker интерфейсом.**
 License: MIT
